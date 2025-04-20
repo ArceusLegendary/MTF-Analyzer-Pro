@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTF Calculator</title>
+	<Style>
+	body{font-family:Arial,sans-serif;margin:15px}
+.container{display:flex;flex-wrap:wrap;gap:15px}
+.left{flex:1;min-width:220px} .right{flex:3;min-width:580px}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select{width:100%;padding:5px;box-sizing:border-box}
+label{display:block;margin-bottom:3px;font-size:13px;font-weight:700}
+button{padding:6px 10px;background:#1a73e8;color:#fff;border:none;cursor:pointer;border-radius:4px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #ddd;padding:5px;text-align:right}
+th{background-color:#f2f2f2;font-size:12px;position:sticky;top:0}
+.rate-info{background:#f9f9f9;border-left:3px solid #1a73e8;margin:15px 0;padding:10px;border-radius:4px;font-size:13px}
+.profit{color:#4CAF50} .loss{color:#F44336}
+.difference{color:#6372d6} .multiplier{color:#ed856d}
+.table-container{max-height:400px;overflow-y:auto}
+h2,h3{margin-top:0;font-size:18px}
+.button-group{display:flex;gap:8px}
+.rate-title{font-weight:700;margin-bottom:3px;color:#333}
+.rate-value{font-size:15px;font-weight:700;color:#1a73e8}
+.rate-desc{color:#666;font-size:12px;font-style:italic}
+.switch-container{margin:15px 0;display:flex;align-items:center}
+.switch{position:relative;display:inline-block;width:44px;height:22px;margin-right:10px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.3s;border-radius:22px}
+.slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background-color:#fff;transition:.3s;border-radius:50%}
+input:checked+.slider{background-color:#1a73e8}
+input:checked+.slider:before{transform:translateX(22px)}
+.toggle-label{font-weight:700;font-size:13px}
+#customRateContainer{display:none;margin-top:10px}
+button.reset{background:#f1f1f1;color:#333}
+.calc-results{background:#f5f5f5;padding:12px;border-radius:4px;margin-top:15px}
+.results-table{width:100%;border:none;margin-top:5px}
+.results-table td{border:none;padding:3px 0;text-align:left}
+.results-table td:first-child{font-weight:700;width:50%}
+.month-selector{display:flex;gap:2px;margin:10px 0;overflow-x:auto}
+.month-btn{padding:3px 6px;font-size:11px;background:#eee;border:1px solid #ddd;cursor:pointer;border-radius:3px}
+.month-btn.active{background:#1a73e8;color:white;border-color:#1a73e8}
+hr{border:0;height:1px;background:#ddd;margin:10px 0}
+.leverage-column {
+    background-color: #fafafa;
+    color: #666;
+    font-size: 12px;
+    border-left: 2px solid #e0e0e0;
+    display: none; /* Initially hidden */
+}
+.leverage-column.show {
+    display: table-cell;
+}
+.separator {
+    color: #999;
+    padding: 0 5px;
+}
+
+.total-balance-container {
+    margin-left: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.total-balance-label {
+    margin-right: 10px;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.green-label {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.blue-input {
+    background-color: #E3F2FD;
+    border: 1px solid #90CAF9;
+    color: #0D47A1;
+    font-weight: bold;
+    font-size: inherit;
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.rate-reduction-row {
+    background-color: rgba(255, 243, 224, 0.5); /* Lighter orange background (50% less intense) */
+    border-left: 2px solid rgba(255, 152, 0, 0.7); /* Softer orange border */
+    font-weight: 500;
+}
+
+.rate-reduction-amount {
+    color: rgba(230, 81, 0, 0.8) !important; /* Softer orange text */
+    font-size: 1.05em;
+}
+
+.section-divider td {
+    height: 8px;
+    padding: 0;
+    border-bottom: 1px dashed #ccc;
+    opacity: 0.8;
+}
+
+.rates-container {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.rates-container .rate-info {
+    flex: 1;
+    margin: 0;
+}
+
+.rates-container:after {
+    content: "";
+    display: block;
+    border-bottom: 1px dashed #ccc;
+    margin-top: 10px;
+    opacity: 0.6;
+}
+
+/* Remove spinner buttons from number inputs */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+input[type=number] {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;
+}
+
+	</style>
+</head>
+<body>
+    <h2>Margin Trading Facility (MTF) Calculator</h2>
+    <div class="ultra-link">
+        <a id="upgradeButton" href="Ultra.html" title="Switch to Ultra version">
+            <span class="ultra-icon"></span>
+            <span class="ultra-text">Ultra Mode</span>
+        </a>
+    </div>
+    
+    <style>
+    .ultra-link {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 10;
+    }
+    
+    .ultra-link a {
+        background: linear-gradient(135deg, #1a73e8, #0d47a1);
+        color: white;
+        border-radius: 12px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 6px rgba(26, 115, 232, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ultra-link a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: 0.5s;
+    }
+    
+    .ultra-link a:hover::before {
+        left: 100%;
+    }
+    
+    .ultra-link a:hover {
+        background: linear-gradient(135deg, #0d47a1, #1a73e8);
+        box-shadow: 0 2px 8px rgba(26, 115, 232, 0.5);
+        transform: translateY(-1px);
+    }
+    
+    .ultra-icon {
+        position: relative;
+        width: 12px;
+        height: 12px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+    }
+    
+    .ultra-icon::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        background: linear-gradient(135deg, #1a73e8, #0d47a1);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.2) inset;
+    }
+    
+    .ultra-text {
+        position: relative;
+        font-size: 11px;
+        font-weight: 700;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .ultra-notification {
+        position: fixed;
+        top: 14px; /* Adjusted for perfect vertical alignment */
+        right: 145px; /* Positioned more to the left of the Ultra Mode button */
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        height: 22px; /* Match height of ultra mode button */
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+        animation-delay: 0.4s;
+    }
+    
+    /* Arrow pointing to Ultra Mode */
+    .ultra-notification::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: -15px;
+        transform: translateY(-50%);
+        border-width: 7px 0 7px 15px;
+        border-style: solid;
+        border-color: transparent transparent transparent #616161;
+        z-index: 999;
+        filter: drop-shadow(2px 0px 2px rgba(33, 33, 33, 0.4));
+        transition: all 0.3s ease;
+    }
+    
+    .ultra-notification:hover::after {
+        border-color: transparent transparent transparent #424242;
+        filter: drop-shadow(3px 0px 3px rgba(33, 33, 33, 0.5));
+    }
+    
+    .ultra-notification.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .ultra-notification-content {
+        background: linear-gradient(120deg, #212121, #424242, #616161);
+        color: #f5f5f5;
+        border-radius: 30px;
+        padding: 7px 18px;
+        font-size: 12px;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(33, 33, 33, 0.5), inset 0 1px 3px rgba(97, 97, 97, 0.3);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        height: 22px; /* Set fixed height to match Ultra Mode button */
+        border: 1px solid rgba(158, 158, 158, 0.5);
+        overflow: hidden;
+        position: relative;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        letter-spacing: 0.3px;
+    }
+    
+    /* Shimmer effect */
+    .ultra-notification-content::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .ultra-notification.active .ultra-notification-content::before {
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; opacity: 0.8; }
+        50% { opacity: 1; }
+        100% { left: 100%; opacity: 0.8; }
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 0.9; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+        100% { opacity: 0.9; transform: scale(1); }
+    }
+    
+    .ultra-notification-content:hover {
+        background: linear-gradient(120deg, #000000, #212121, #424242);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 8px rgba(97, 97, 97, 0.3);
+        transform: translateY(-2px) scale(1.02);
+    }
+    
+
+    
+    .notification-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-size: 11px;
+        color: #ec407a;
+        animation: glow 1.5s ease-in-out infinite alternate;
+        background: rgba(236, 64, 122, 0.1);
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        position: relative;
+    }
+    
+    .notification-icon::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: 50%;
+        padding: 1px;
+        background: linear-gradient(45deg, #f48fb1, #f8bbd0, #f48fb1);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+    
+    @keyframes glow {
+        from { text-shadow: 0 0 1px #f8bbd0, 0 0 2px #f8bbd0, 0 0 3px #f48fb1, 0 0 4px #f48fb1; }
+        to { text-shadow: 0 0 2px #f8bbd0, 0 0 3px #f06292, 0 0 4px #ec407a, 0 0 5px #e91e63; }
+    }
+    
+    .arrow-text {
+        margin-left: 10px;
+        font-size: 15px;
+        font-weight: bold;
+        animation: bounce 1s infinite;
+        color: #4caf50;
+        position: relative;
+        top: -1px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(3px); }
+    }
+    
+    /* For Font Awesome icons */
+    .fa-bolt::before {
+        content: "\\f0e7";
+        vertical-align: middle;
+    }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <div id="ultraNotification" class="ultra-notification"></div>
+    
+    <script>
+    // Display Ultra Mode notification after 3 seconds
+    setTimeout(function() {
+        const ultraNotification = document.getElementById('ultraNotification');
+        ultraNotification.innerHTML = `
+            <a href="Ultra.html" class="ultra-notification-content">
+                <span class="notification-icon"><i class="fas fa-bolt"></i></span>
+                <span><span style="color:#f06292;font-weight:700">Try</span> <span style="color:#f8bbd0">Ultra Mode</span><span style="color:#ffd54f"> for premium design</span></span>
+                <span class="arrow-text">→</span>
+            </a>
+        `;
+        
+        // Play subtle sound when notification appears (optional)
+        // const notificationSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAYGBgYGBgYGBgYGBgYGBgkJCQkJCQkJCQkJCQkJCQwMDAwMDAwMDAwMDAwMDA4ODg4ODg4ODg4ODg4ODg//////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYLj//zgwDl/68AAAABNtgCAAEBYgAPn3l3RB9/7zgSbT6sBZd1+/dGb//QHQb//71pSq9D/v/l//9VLafSi6lE7//3+7JJE2TgsLnIlYPwfB8HwfBLkN5CXxcEh6t5eYF8EgIh/sPzeH4PgTn2XEHy4PgQDH//yIOoKgQAw9P//8iDIPyIOj8+vkQdQAgmPr/nZBcHwQA/7WQXAX/5EHwfB8HwfB8H39h+D4Pg+D4Pg+D4PgQB//z4Pgj//Ig+D4I//7KxKh//4sBUD/2//3//6VIEoEMrB8HwfB8Hw+f2H4PgQBcuTD8EDl5ILg+D4Pg//+RB1BUCAHn+RB8HwfB8HwfB8HwfB8HwfB8EAP/VkFwF/+RB8HwQA5PzCCoCp5EHr9Qf//8iD4Pg+D4Pg+D4Pg+D4Pg+D4Pg+D4P//lYPg+D4Pg+D4P//kQfB8HwfAUPD8+RB8HwfAWPL//+RB8AQPSfIg+D4Pg+D4Pg+D4Pg+D4Pg+D4Pg+D4Pg+D4Pg+D//+RB8HwfB8HwfB8AAYqVw/BAD8+vIg+AgBvxfn2JB8HwfB8HwfB8HwfB8HwfB8HwfB//KwfB8HwfADPzkQfB8HwfB8HwfB8HwfB8HwfBID9+fXIg+D4Pg+D4P/5EHwfB//4IBhkX/+0B/82p5ED2n//v//+QnIbNFtRuQoAAASY8kMIxw5BQMYYEUBMKONSJEtYhFwc4JWSIHM8KgDX2q+Hxj//+KUpOHa1dIg1IvJIB/8TkW4qXuM+Qsyv2q9Ifmgdgh5FoxBqh3zYVPvuUEhIvLoCgLKu5w0bUkLl5Ef/YrJVuKhlWrr3Wh0eoeVKe1hhzW6uq2mx7Q1nSqhOYvUNSQmBt3NlHSZ3pTUzW5RpKd2mvY1pT0VcKtWmlNhh2MfmxD1sUiCuSMfpwAAAAA+HAhmTfBA1BBuA0MOwMtXaYmPQABID4M5/cqE/uREZ0TgCQGBZ9qwBsHWqMrA2gOlAHCCqy0xqNHjRRiXx6tBUkAYGKwJ0KO3r9XAqEiNSfk6AvF0pBNcjUvKhQgBQAtFgAJY7ggOqYxvI8h7GWCsA5A4pRKhUTyZUxFyR/DsAqUCsFYkDSIUmRKnTSKpYxe1jQVGXEbUmcECigm1aXJJc7HpPDtBWN+s3+ppM8LyhZUb/QqYLZ4zVjEkz7hJZEm4tT8AJPBpS6Erc07sltxA7vkklLPCxAcpvqzBWsrE8XbkfXQlR1IsXZtNDHPDGxP0qNLfklLInBs06Kv2QAAAA==');  
+        // notificationSound.volume = 0.2; // Lower volume to be subtle
+        // notificationSound.play();
+        ultraNotification.classList.add('active');
+        
+        // Give a subtle pulse animation before disappearing
+        setTimeout(function() {
+            ultraNotification.style.animation = 'pulse 1s ease-in-out';
+            
+            // Hide notification after pulse animation
+            setTimeout(function() {
+                ultraNotification.classList.remove('active');
+            }, 1000);
+        }, 4000);
+    }, 3000);
+    </script>
+    
+    <div class="container">
+        <div class="left">
+            <div class="input-grid">
+                <div>
+                    <label class="green-label total-balance-label">Total Balance (₹):</label>
+                    <input type="number" id="totalBalance" value="120000" min="0" step="10000" max="1000000000000" class="blue-input">
+                </div>
+                <div>
+                    <label>Own Amount (₹):</label>
+                    <input type="number" id="ownAmount" value="50000" min="1000" max="1000000000000">
+                </div>
+                <div>
+                    <label>Buy Price (₹):</label>
+                    <input type="number" id="buyPrice" value="100" min="0.01" step="0.01" max="50000">
+                </div>
+                <div>
+                    <label>Sell Price (₹):</label>
+                    <input type="number" id="sellPrice" value="105" min="0.01" step="0.01" max="50000">
+                </div>
+                <div>
+                    <label>Leverage (1-5):</label>
+                    <input type="number" id="leverage" value="2" min="1" max="5" step="1">
+                </div>
+                <div>
+                    <label id="maxPeriodLabel">Max Months:</label>
+                    <input type="number" id="maxPeriod" value="12" min="1" max="12">
+                </div>
+            </div>
+            
+            <div class="switch-container">
+                <label class="switch">
+                    <input type="checkbox" id="dayModeToggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Daily View</span>
+            </div>
+            
+            <div class="rates-container">
+                <div class="rate-info">
+                    <div class="rate-title">Interest Rate</div>
+                    <div class="rate-value" id="currentRate">Current Rate: 0%</div>
+                    <div class="rate-desc">Based on borrowed amount</div>
+                </div>
+                
+                <div class="rate-info">
+                    <div class="rate-title">GST Rate</div>
+                    <div class="rate-value">Fixed Rate: 18%</div>
+                    <div class="rate-desc">Applied on interest amount</div>
+                </div>
+            </div>
+            
+            <div class="switch-container">
+                <label class="switch">
+                    <input type="checkbox" id="customRateToggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Custom Rate</span>
+            </div>
+            
+            <div id="customRateContainer">
+                <label>Custom Interest Rate (%):</label>
+                <input type="number" id="customRate" value="12.49" min="0" max="25" step="0.01">
+            </div>
+            
+            <div class="button-group">
+                <button onclick="calculateMTF()">Calculate</button>
+                <button onclick="resetForm()" class="reset">Reset</button>
+            </div>
+            
+            <div id="resultSummary" class="calc-results" style="display:none">
+                <h3>Calculation Results</h3>
+                <div id="monthSelector" class="month-selector"></div>
+                <table class="results-table">
+                    <tr><td>Total Buying Power</td><td id="totalInvestment">₹0</td></tr>
+                    <tr><td>Borrowed Amount</td><td id="fundedAmount">₹0</td></tr>
+                    <tr><td>Effective Borrowed Amount:</td><td id="effectiveBorrowedAmount">₹0</td></tr>
+                    <tr><td>Leftover Balance:</td><td id="leftoverBalance">₹0</td></tr>
+                    <tr class="rate-reduction-row" style="display:none;"><td>Add to reduce MTF rate:</td><td id="rateReductionAmount" class="rate-reduction-amount">₹0</td></tr>
+                    <tr class="section-divider"><td colspan="2"></td></tr>
+                    <tr><td>Units Purchased</td><td id="quantity">0</td></tr>
+                    <tr><td>Interest Rate</td><td id="interestRate">0%</td></tr>
+                    <tr><td>Other Charges</td><td id="otherChargesDisplay">₹0</td></tr>
+                    <tr class="section-divider"><td colspan="2"></td></tr>
+                    <tr id="noLeverageRow" style="display:none;"><td>Without Leverage</td><td id="noLeverageDisplay">₹0</td></tr>
+                    <tr id="diffRow" style="display:none;"><td>Leverage Advantage</td><td id="leverageDiffDisplay">0%</td></tr>
+                    <tr><td>Breakeven Price</td><td id="breakevenPrice">₹0</td></tr>
+                    <tr><td>Gross Profit</td><td id="grossProfit">₹0</td></tr>
+                    <tr><td>Paper Profit</td><td id="paperProfit">₹0</td></tr>
+                    <tr><td>Net Profit</td><td id="netProfit">₹0</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="right">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr id="tableHeader">
+                            <th>Month</th><th>MTF Charges</th><th>GST</th><th>Other Charges</th>
+                            <th class="leverage-column" id="leverageColumnHeader">Net Profit (Returns %)</th>
+                            <th>Gross Profit</th><th>Paper Profit</th><th>Net Profit</th><th>Returns %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+	// Define constants for interest rate slabs (in rupees)
+const SLAB_1_MAX = 500000;       // 5 lakhs
+const SLAB_2_MAX = 1000000;      // 10 lakhs
+const SLAB_3_MAX = 2500000;      // 25 lakhs
+const SLAB_4_MAX = 5000000;      // 50 lakhs
+
+// Define maximum value limits
+const MAX_BALANCE_OWN_AMOUNT = 1000000000000; // 10,000 crores (₹10 lakh crores)
+const MAX_PRICE = 50000;          // ₹50,000 per share
+const MAX_DAYS = 60;              // 60 days maximum
+const MAX_MONTHS = 24;            // 24 months maximum
+
+let calculationResults = [];
+const customRateToggle = document.getElementById('customRateToggle');
+const customRateContainer = document.getElementById('customRateContainer');
+const currentRateDisplay = document.getElementById('currentRate');
+const dayModeToggle = document.getElementById('dayModeToggle');
+const leverageColumnHeader = document.getElementById('leverageColumnHeader');
+let noLeverageReturnPercent = 0; // Store this globally for comparisons
+let noLeverageNetProfit = 0;
+
+// Add input validation to prevent negative values and zeros
+document.addEventListener('DOMContentLoaded', function() {
+    // No need for special animation functionality as we're using a simple link now
+    // Get all numeric input elements
+    const numericInputs = document.querySelectorAll('input[type="number"]');
+    
+    numericInputs.forEach(input => {
+        // Prevent typing negative sign
+        input.addEventListener('keydown', function(e) {
+            if (e.key === '-' || e.keyCode === 189) {
+                e.preventDefault();
+            }
+        });
+        
+        // Validate on input changes
+        input.addEventListener('input', function() {
+            let value = this.value;
+            
+            // Remove any negative signs that might be pasted
+            if (value.includes('-')) {
+                value = value.replace('-', '');
+                this.value = value;
+            }
+            
+            // Handle zero inputs
+            if (value === '0' || parseFloat(value) === 0) {
+                this.value = '';
+            }
+            
+            // Apply maximum value limits based on input field
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+                // Apply specific limits based on input field ID
+                if (this.id === 'totalBalance' || this.id === 'ownAmount') {
+                    if (numValue > MAX_BALANCE_OWN_AMOUNT) {
+                        this.value = MAX_BALANCE_OWN_AMOUNT.toString();
+                    }
+                } else if (this.id === 'buyPrice' || this.id === 'sellPrice') {
+                    if (numValue > MAX_PRICE) {
+                        this.value = MAX_PRICE.toString();
+                    }
+                } else if (this.id === 'maxPeriod') {
+                    const isDayMode = document.getElementById('dayModeToggle').checked;
+                    const maxAllowed = isDayMode ? MAX_DAYS : MAX_MONTHS;
+                    if (numValue > maxAllowed) {
+                        this.value = maxAllowed.toString();
+                    }
+                }
+            }
+            
+            // Enforce leverage limits (1-5)
+            if (this.id === 'leverage') {
+                const val = parseFloat(value);
+                if (!isNaN(val) && val > 5) {
+                    this.value = '5';
+                }
+                
+                // Make sure to update interest rate when leverage changes
+                updateInterestRateDisplay();
+            }
+            
+            // Enforce custom rate maximum (25%)
+            if (this.id === 'customRate') {
+                const val = parseFloat(value);
+                if (!isNaN(val) && val > 25) {
+                    this.value = '25';
+                }
+            }
+            
+            // Update interest rate when own amount changes
+            if (this.id === 'ownAmount') {
+                updateAmountDisplay();
+                updateInterestRateDisplay();
+            }
+            
+            // Update total balance display when total balance changes
+            if (this.id === 'totalBalance') {
+                updateTotalBalanceDisplay();
+            }
+        });
+    });
+    
+    // Create the amount display div
+    const amountDisplayDiv = document.createElement('div');
+    amountDisplayDiv.id = 'amountDisplay';
+    
+    // Improved styling - green color, better positioning, clear separation
+    amountDisplayDiv.style.fontSize = '12px';
+    amountDisplayDiv.style.color = '#2e7d32'; // Green color
+    amountDisplayDiv.style.fontWeight = '500';
+    amountDisplayDiv.style.padding = '8px 2px';
+    amountDisplayDiv.style.margin = '15px 0 8px 0';
+    amountDisplayDiv.style.borderBottom = '1px dotted #ddd';
+    
+    // Get the Own Amount input and insert the display AFTER the parent div
+    const ownAmountInput = document.getElementById('ownAmount');
+    const ownAmountParent = ownAmountInput.parentElement;
+    
+    // Insert after the own amount input div
+    ownAmountParent.parentNode.insertBefore(amountDisplayDiv, ownAmountParent.nextSibling);
+    
+    // Create amount display for Total Balance
+    const totalBalanceInput = document.getElementById('totalBalance');
+    const totalBalanceParent = totalBalanceInput.parentNode;
+    
+    const totalBalanceDisplayDiv = document.createElement('div');
+    totalBalanceDisplayDiv.id = 'totalBalanceDisplay';
+    
+    // Style the total balance display
+    totalBalanceDisplayDiv.style.fontSize = '12px';
+    totalBalanceDisplayDiv.style.color = '#F48FB1'; // Softer pink color
+    totalBalanceDisplayDiv.style.fontWeight = '500';
+    totalBalanceDisplayDiv.style.padding = '8px 2px';
+    totalBalanceDisplayDiv.style.margin = '15px 0 8px 0';
+    totalBalanceDisplayDiv.style.borderBottom = '1px dotted #ddd';
+    
+    // Add event listener for updating the display
+    totalBalanceInput.addEventListener('input', updateTotalBalanceDisplay);
+    totalBalanceInput.addEventListener('change', updateTotalBalanceDisplay);
+    
+    // Insert the display element after the input's parent div
+    totalBalanceParent.parentNode.insertBefore(totalBalanceDisplayDiv, totalBalanceParent.nextSibling);
+    
+    // Initial displays
+    updateAmountDisplay();
+    updateTotalBalanceDisplay();
+    updateInterestRateDisplay();
+
+    // Set up day/month toggle
+    dayModeToggle.addEventListener('change', function() {
+        const maxPeriodLabel = document.getElementById('maxPeriodLabel');
+        const maxPeriodInput = document.getElementById('maxPeriod');
+        const tableContainer = document.querySelector('.table-container');
+        
+        if (this.checked) {
+            // Day mode
+            maxPeriodLabel.textContent = 'Max Days:';
+            maxPeriodInput.max = MAX_DAYS; // Still use MAX_DAYS as upper limit
+            maxPeriodInput.value = 31; // Keep original default of 31 days
+            // Update table header and increase table height for more visible rows
+            document.querySelector('#tableHeader th:first-child').textContent = 'Day';
+            tableContainer.style.maxHeight = '900px'; // Increased to show all rows
+        } else {
+            // Month mode
+            maxPeriodLabel.textContent = 'Max Months:';
+            maxPeriodInput.max = MAX_MONTHS; // Still use MAX_MONTHS as upper limit
+            maxPeriodInput.value = 12; // Keep original default of 12 months
+            // Update table header and reset table height
+            document.querySelector('#tableHeader th:first-child').textContent = 'Month';
+            tableContainer.style.maxHeight = '400px'; // Reset to original height
+        }
+        
+        // Automatically recalculate when toggling views
+        calculateMTF();
+    });
+    
+    // Automatically calculate with default values when page loads
+    document.getElementById('leverage').value = 5;
+    calculateMTF();
+});
+
+// Format amount to words
+function formatAmountInWords(amount) {
+    if (amount <= 0) return "";
+    
+    if (amount >= 10000000) { // Crore
+        const crores = Math.floor(amount / 10000000);
+        const remainder = amount % 10000000;
+        
+        if (remainder === 0) {
+            return `${crores} crore${crores > 1 ? 's' : ''}`;
+        } else {
+            const lakhs = formatLakhs(remainder);
+            return `${crores} crore${crores > 1 ? 's' : ''} ${lakhs}`;
+        }
+    } else {
+        return formatLakhs(amount);
+    }
+}
+
+function formatLakhs(amount) {
+    if (amount >= 100000) { // Lakh
+        const lakhs = Math.floor(amount / 100000);
+        const remainder = amount % 100000;
+        
+        if (remainder === 0) {
+            return `${lakhs} lakh${lakhs > 1 ? 's' : ''}`;
+        } else if (remainder === 1) {
+            return `${lakhs} lakh${lakhs > 1 ? 's' : ''} and 1 rupee`;
+        } else if (remainder < 1000) {
+            return `${lakhs} lakh${lakhs > 1 ? 's' : ''} and ${remainder} rupees`;
+        } else {
+            const thousands = Math.floor(remainder / 1000);
+            const rupees = remainder % 1000;
+            if (rupees === 0) {
+                return `${lakhs} lakh${lakhs > 1 ? 's' : ''} and ${thousands} thousand`;
+            } else {
+                return `${lakhs} lakh${lakhs > 1 ? 's' : ''} and ${thousands} thousand ${rupees} rupees`;
+            }
+        }
+    } else if (amount >= 1000) { // Thousand
+        const thousands = Math.floor(amount / 1000);
+        const rupees = amount % 1000;
+        
+        if (rupees === 0) {
+            return `${thousands} thousand`;
+        } else {
+            return `${thousands} thousand ${rupees} rupees`;
+        }
+    } else {
+        return `${amount} rupees`;
+    }
+}
+
+function updateAmountDisplay() {
+    const ownAmountInput = document.getElementById('ownAmount');
+    const amountDisplayDiv = document.getElementById('amountDisplay');
+    const amount = parseFloat(ownAmountInput.value);
+    if (!isNaN(amount) && amount > 0) {
+        amountDisplayDiv.textContent = ' ' + formatAmountInWords(amount);
+    } else {
+        amountDisplayDiv.textContent = '';
+    }
+}
+
+function updateTotalBalanceDisplay() {
+    const totalBalanceInput = document.getElementById('totalBalance');
+    const totalBalanceDisplayDiv = document.getElementById('totalBalanceDisplay');
+    const amount = parseFloat(totalBalanceInput.value);
+    if (!isNaN(amount) && amount > 0) {
+        totalBalanceDisplayDiv.textContent = ' ' + formatAmountInWords(amount);
+    } else {
+        totalBalanceDisplayDiv.textContent = '';
+    }
+}
+
+// Function to update interest rate display based on leverage and own amount
+function updateInterestRateDisplay() {
+    if (customRateToggle.checked) {
+        currentRateDisplay.textContent = 'Custom Rate Enabled';
+        return;
+    }
+    
+    const leverage = parseFloat(document.getElementById('leverage').value);
+    
+    // If leverage is 1, no borrowing occurs, so interest rate is 0
+    if (isNaN(leverage) || leverage === 1) {
+        currentRateDisplay.textContent = 'Current Rate: 0%';
+        return;
+    }
+    
+    // For leverage > 1, determine rate based on borrowed amount
+    const ownAmount = parseFloat(document.getElementById('ownAmount').value);
+    const borrowedAmount = ownAmount * (leverage - 1); // Calculate the borrowed amount
+    
+    // Also calculate effective borrowed amount
+    const totalBalance = parseFloat(document.getElementById('totalBalance').value);
+    const leftoverBalance = Math.max(0, isNaN(totalBalance) ? 0 : totalBalance - ownAmount);
+    const effectiveBorrowedAmount = Math.max(0, borrowedAmount - leftoverBalance);
+    
+    let rate;
+    
+    if (isNaN(ownAmount) || ownAmount <= 0 || effectiveBorrowedAmount <= 0) {
+        rate = 0; // No interest when there's no effective borrowing
+    }
+    else if (effectiveBorrowedAmount < SLAB_1_MAX || Math.abs(effectiveBorrowedAmount - SLAB_1_MAX) < 0.01) {
+        rate = 12.49;
+    } 
+    else if (effectiveBorrowedAmount > SLAB_1_MAX && effectiveBorrowedAmount <= SLAB_2_MAX) {
+        rate = 13.49;
+    } 
+    else if (effectiveBorrowedAmount > SLAB_2_MAX && effectiveBorrowedAmount <= SLAB_3_MAX) {
+        rate = 14.49;
+    } 
+    else if (effectiveBorrowedAmount > SLAB_3_MAX && effectiveBorrowedAmount <= SLAB_4_MAX) {
+        rate = 15.49;
+    } 
+    else {
+        rate = 16.49;
+    }
+    
+    currentRateDisplay.textContent = `Current Rate: ${rate}%`;
+}
+
+customRateToggle.addEventListener('change', function() {
+    customRateContainer.style.display = this.checked ? 'block' : 'none';
+    
+    if (this.checked) {
+        currentRateDisplay.textContent = 'Custom Rate Enabled';
+    } else {
+        updateInterestRateDisplay();
+    }
+});
+
+// Helper function to generate advantage HTML
+function generateAdvantageHTML(leveragedReturn, noLeveragedReturn) {
+    const returnDiff = leveragedReturn - noLeveragedReturn;
+    let multiplier = Math.abs(leveragedReturn / noLeveragedReturn).toFixed(1);
+    
+    // If either return is near zero or negative, handle the multiplier differently
+    if (Math.abs(noLeveragedReturn) < 0.1 || 
+        (leveragedReturn < 0 && noLeveragedReturn > 0) || 
+        (leveragedReturn > 0 && noLeveragedReturn < 0)) {
+        multiplier = "N/A";
+    } else {
+        multiplier = multiplier + "x";
+    }
+    
+    const diffClass = returnDiff >= 0 ? 'difference' : 'loss';
+    // Use the appropriate color for the multiplier based on whether the advantage is positive or negative
+    const multiplierClass = returnDiff >= 0 ? 'multiplier' : 'difference';
+    
+    return `<span class="${diffClass}">${returnDiff.toLocaleString('en-IN', {maximumFractionDigits: 2})}%</span> <span class="${multiplierClass}">≈ ${multiplier}</span>`;
+}
+
+function selectMonth(period) {
+    if (!calculationResults.length) return;
+    
+    // Update active month/day button
+    document.querySelectorAll('.month-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`period-${period}`).classList.add('active');
+    
+    // Update the summary values for the selected period
+    const result = calculationResults[period-1];
+    document.getElementById('grossProfit').textContent = '₹' + result.grossProfit.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    document.getElementById('paperProfit').textContent = '₹' + result.paperProfit.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    document.getElementById('netProfit').textContent = '₹' + result.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    document.getElementById('breakevenPrice').textContent = '₹' + result.breakevenPrice.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    
+    // Make sure to update the interest rate display from the result
+    document.getElementById('interestRate').textContent = result.interestRate.toFixed(2) + '%';
+    
+    // Update the leverage advantage for the current period
+    if (document.getElementById('diffRow').style.display !== 'none') {
+        const leverageDiffDisplay = document.getElementById('leverageDiffDisplay');
+        leverageDiffDisplay.innerHTML = generateAdvantageHTML(result.returnPercent, noLeverageReturnPercent);
+    }
+    
+    // Color code the profit/loss
+    document.getElementById('grossProfit').className = result.grossProfit >= 0 ? 'profit' : 'loss';
+    document.getElementById('paperProfit').className = result.paperProfit >= 0 ? 'profit' : 'loss';
+    document.getElementById('netProfit').className = result.netProfit >= 0 ? 'profit' : 'loss';
+}
+
+function calculateMTF() {
+    const ownAmount = parseFloat(document.getElementById('ownAmount').value);
+    const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+    const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+    const leverage = parseFloat(document.getElementById('leverage').value);
+    const totalBalance = parseFloat(document.getElementById('totalBalance').value);
+    const maxPeriod = parseInt(document.getElementById('maxPeriod').value);
+    const useCustomRate = document.getElementById('customRateToggle').checked;
+    const isDayMode = document.getElementById('dayModeToggle').checked;
+    
+    // Silent validation - no alert popups
+    if (isNaN(leverage) || leverage < 1 || isNaN(ownAmount) || isNaN(buyPrice) || isNaN(sellPrice) || 
+        ownAmount <= 0 || buyPrice <= 0 || sellPrice <= 0 || isNaN(totalBalance) || totalBalance < 0) {
+        return; // Just stop execution, no error messages
+    }
+    
+    // Show or hide leverage column based on leverage value
+    if (leverage > 1) {
+        leverageColumnHeader.classList.add('show');
+        document.getElementById('noLeverageRow').style.display = 'table-row';
+        document.getElementById('diffRow').style.display = 'table-row';
+    } else {
+        leverageColumnHeader.classList.remove('show');
+        document.getElementById('noLeverageRow').style.display = 'none';
+        document.getElementById('diffRow').style.display = 'none';
+    }
+    
+    const tradeValue = ownAmount * leverage;
+    const fundedAmount = tradeValue - ownAmount;
+    
+    // Calculate leftover balance and effective borrowed amount
+    const leftoverBalance = Math.max(0, totalBalance - ownAmount);
+    const effectiveBorrowedAmount = Math.max(0, fundedAmount - leftoverBalance);
+    
+    // Debug logging
+    console.log('Total Balance:', totalBalance);
+    console.log('Own Amount:', ownAmount);
+    console.log('Funded Amount:', fundedAmount);
+    console.log('Leftover Balance:', leftoverBalance);
+    console.log('Effective Borrowed Amount:', effectiveBorrowedAmount);
+    console.log('SLAB_1_MAX:', SLAB_1_MAX);
+    
+    const exactQuantity = tradeValue / buyPrice;
+    const quantity = Math.floor(exactQuantity);
+    const totalInvestment = quantity * buyPrice;
+    const otherCharges = tradeValue * (300 / 100000);
+    
+    // Calculate the no-leverage scenario once (doesn't change with period)
+    const noLeverageQuantity = Math.floor(ownAmount / buyPrice);
+    const noLeverageGrossProfit = (sellPrice - buyPrice) * noLeverageQuantity;
+    const noLeverageOtherCharges = ownAmount * (300 / 100000);
+    noLeverageNetProfit = noLeverageGrossProfit - noLeverageOtherCharges;
+    noLeverageReturnPercent = (noLeverageNetProfit / ownAmount) * 100;
+    
+    let interestRate;
+    if (useCustomRate) {
+        interestRate = parseFloat(document.getElementById('customRate').value);
+        if (isNaN(interestRate) || interestRate < 0) {
+            return; // Silent fail - no error message
+        }
+    } else {
+        // If leverage is 1, no borrowing occurs, so interest rate is 0
+        if (leverage === 1 || effectiveBorrowedAmount <= 0) {
+            interestRate = 0;
+        } else {
+            // Only apply slab-based interest rates when actually borrowing (leverage > 1)
+            console.log('Determining interest rate slab for borrowed amount:', effectiveBorrowedAmount);
+            if (effectiveBorrowedAmount < SLAB_1_MAX || Math.abs(effectiveBorrowedAmount - SLAB_1_MAX) < 0.01) {
+                interestRate = 12.49;  // Slab 1: Up to ₹5,00,000
+                console.log('Interest rate determined: Slab 1 (12.49%)');
+            } 
+            else if (effectiveBorrowedAmount > SLAB_1_MAX && effectiveBorrowedAmount <= SLAB_2_MAX) {
+                interestRate = 13.49;  // Slab 2: ₹5,00,000.01 to ₹10,00,000
+                console.log('Interest rate determined: Slab 2 (13.49%)');
+            } 
+            else if (effectiveBorrowedAmount > SLAB_2_MAX && effectiveBorrowedAmount <= SLAB_3_MAX) {
+                interestRate = 14.49;  // Slab 3: ₹10,00,000.01 to ₹25,00,000
+                console.log('Interest rate determined: Slab 3 (14.49%)');
+            } 
+            else if (effectiveBorrowedAmount > SLAB_3_MAX && effectiveBorrowedAmount <= SLAB_4_MAX) {
+                interestRate = 15.49;  // Slab 4: ₹25,00,000.01 to ₹50,00,000
+                console.log('Interest rate determined: Slab 4 (15.49%)');
+            } 
+            else {
+                interestRate = 16.49;  // Slab 5: Above ₹50,00,000
+                console.log('Interest rate determined: Slab 5 (16.49%)');
+            }
+        }
+    }
+    
+    // Update the summary section
+    document.getElementById('totalInvestment').textContent = '₹' + totalInvestment.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    document.getElementById('fundedAmount').textContent = '₹' + fundedAmount.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    
+    // Add effective borrowing information to summary
+    document.getElementById('effectiveBorrowedAmount').textContent = '₹' + effectiveBorrowedAmount.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    document.getElementById('leftoverBalance').textContent = '₹' + leftoverBalance.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    
+    // Calculate additional money needed to reduce the MTF rate
+    let amountToReduceRate = 0;
+    let rateReductionRow = document.querySelector('.rate-reduction-row');
+    
+    if (effectiveBorrowedAmount > 0) {
+        if (effectiveBorrowedAmount > SLAB_4_MAX) {
+            // From Slab 5 (>50L) to Slab 4 (25-50L)
+            amountToReduceRate = effectiveBorrowedAmount - SLAB_4_MAX;
+        } else if (effectiveBorrowedAmount > SLAB_3_MAX) {
+            // From Slab 4 (25-50L) to Slab 3 (10-25L)
+            amountToReduceRate = effectiveBorrowedAmount - SLAB_3_MAX;
+        } else if (effectiveBorrowedAmount > SLAB_2_MAX) {
+            // From Slab 3 (10-25L) to Slab 2 (5-10L)
+            amountToReduceRate = effectiveBorrowedAmount - SLAB_2_MAX;
+        } else if (effectiveBorrowedAmount > SLAB_1_MAX) {
+            // From Slab 2 (5-10L) to Slab 1 (0-5L)
+            amountToReduceRate = effectiveBorrowedAmount - SLAB_1_MAX;
+        } else if (effectiveBorrowedAmount <= SLAB_1_MAX) {
+            // From Slab 1 (0-5L) to 0% (no borrowing)
+            amountToReduceRate = effectiveBorrowedAmount;
+        }
+    }
+    
+    // Display or hide the rate reduction row
+    if (amountToReduceRate > 0) {
+        const rateReductionAmount = document.getElementById('rateReductionAmount');
+        rateReductionRow.style.display = 'table-row';
+        rateReductionAmount.textContent = '₹' + amountToReduceRate.toLocaleString('en-IN', {maximumFractionDigits: 0});
+        
+        // Add next tier rate information
+        let nextTierRate = 0;
+        if (effectiveBorrowedAmount > SLAB_4_MAX) {
+            nextTierRate = 15.49;
+        } else if (effectiveBorrowedAmount > SLAB_3_MAX) {
+            nextTierRate = 14.49;
+        } else if (effectiveBorrowedAmount > SLAB_2_MAX) {
+            nextTierRate = 13.49;
+        } else if (effectiveBorrowedAmount > SLAB_1_MAX) {
+            nextTierRate = 12.49;
+        } else {
+            nextTierRate = 0;
+        }
+        
+        rateReductionAmount.innerHTML += ` <span style="font-size:0.9em;">(to ${nextTierRate}%)</span>`;
+    } else {
+        if (rateReductionRow) {
+            rateReductionRow.style.display = 'none';
+        }
+    }
+    
+    document.getElementById('quantity').textContent = quantity.toLocaleString('en-IN', {maximumFractionDigits: 0});
+    document.getElementById('interestRate').textContent = interestRate.toFixed(2) + '%';
+    document.getElementById('otherChargesDisplay').textContent = '₹' + otherCharges.toLocaleString('en-IN', {maximumFractionDigits: 2});
+    document.getElementById('resultSummary').style.display = 'block';
+    
+    // Create period selectors (days or months)
+    let periodButtonsHTML = '';
+    const defaultPeriod = isDayMode ? 5 : Math.min(6, maxPeriod);
+    
+    if (isDayMode) {
+        // For day mode, only show key days: 1, 5, 10, 15, 20, 25, 30
+        const keyDays = [1, 5, 10, 15, 20, 25, 30];
+        for (let i = 0; i < keyDays.length; i++) {
+            // Only include days that are within the max period
+            if (keyDays[i] <= maxPeriod) {
+                periodButtonsHTML += `<button id="period-${keyDays[i]}" class="month-btn ${keyDays[i] === defaultPeriod ? 'active' : ''}" onclick="selectMonth(${keyDays[i]})">${keyDays[i]}</button>`;
+            }
+        }
+    } else {
+        // For month mode, show all months 1-12 (or whatever max is)
+        for (let i = 1; i <= maxPeriod; i++) {
+            periodButtonsHTML += `<button id="period-${i}" class="month-btn ${i === defaultPeriod ? 'active' : ''}" onclick="selectMonth(${i})">${i}</button>`;
+        }
+    }
+    document.getElementById('monthSelector').innerHTML = periodButtonsHTML;
+    
+    // Calculate for each period and store results
+    let resultHTML = "";
+    calculationResults = [];
+    
+    for (let period = 1; period <= maxPeriod; period++) {
+        // Calculate MTF charges based on days or months
+        let mtfCharges;
+        if (isDayMode) {
+            // Daily charges (annual rate / 365 * days)
+            mtfCharges = (effectiveBorrowedAmount > 0) ? (effectiveBorrowedAmount * (interestRate / 100) / 365) * period : 0;
+        } else {
+            // Monthly charges (annual rate / 12 * months)
+            mtfCharges = (effectiveBorrowedAmount > 0) ? (effectiveBorrowedAmount * (interestRate / 100) / 12) * period : 0;
+        }
+        
+        const gst = mtfCharges * 0.18;
+        const totalCosts = mtfCharges + gst + otherCharges;
+        const grossProfit = (sellPrice - buyPrice) * quantity;
+        const paperProfit = grossProfit - mtfCharges;
+        const netProfit = paperProfit - otherCharges - gst;
+        const returnPercent = (netProfit / ownAmount) * 100;
+        const breakevenPrice = buyPrice + (totalCosts / quantity);
+        
+        // Store results for each period
+        calculationResults.push({
+            period: period,
+            mtfCharges: mtfCharges,
+            gst: gst,
+            grossProfit: grossProfit,
+            paperProfit: paperProfit,
+            netProfit: netProfit,
+            returnPercent: returnPercent,
+            breakevenPrice: breakevenPrice,
+            leverage: leverage,
+            ownAmount: ownAmount,
+            totalBalance: totalBalance,
+            leftoverBalance: leftoverBalance,
+            effectiveBorrowedAmount: effectiveBorrowedAmount,
+            interestRate: interestRate,
+            tradeValue: tradeValue,
+            fundedAmount: fundedAmount,
+            totalInvestment: totalInvestment,
+            quantity: quantity,
+            otherCharges: otherCharges,
+            noLeverageNetProfit: noLeverageNetProfit,
+            noLeverageReturnPercent: noLeverageReturnPercent,
+        });
+        
+        const profitClass = netProfit >= 0 ? 'profit' : 'loss';
+        
+        // Add leverage column data if leverage > 1
+        let leverageColumnTd = '';
+        if (leverage > 1) {
+            const noLeverageProfitClass = noLeverageNetProfit >= 0 ? 'profit' : 'loss';
+            
+            // Generate the advantage HTML with proper color coding
+            const advantageHTML = generateAdvantageHTML(returnPercent, noLeverageReturnPercent);
+            
+            // For first row, show both the no-leverage result and the advantage calculation
+            if (period === 1) {
+                leverageColumnTd = `<td class="leverage-column show">
+                    <span class="${noLeverageProfitClass}">₹${noLeverageNetProfit.toLocaleString('en-IN', {maximumFractionDigits: 2})} (${noLeverageReturnPercent.toLocaleString('en-IN', {maximumFractionDigits: 2})}%)</span>
+                    <span class="separator">||</span> 
+                    ${advantageHTML}
+                </td>`;
+                
+                // Update the summary section displays
+                const noLeverageDisplay = document.getElementById('noLeverageDisplay');
+                noLeverageDisplay.innerHTML = `₹${noLeverageNetProfit.toLocaleString('en-IN', {maximumFractionDigits: 2})} (${noLeverageReturnPercent.toLocaleString('en-IN', {maximumFractionDigits: 2})}%)`;
+                noLeverageDisplay.className = noLeverageProfitClass;
+                
+                // Update the leverage advantage display
+                const leverageDiffDisplay = document.getElementById('leverageDiffDisplay');
+                leverageDiffDisplay.innerHTML = advantageHTML;
+            } else {
+                // For other rows, just show the advantage calculation
+                leverageColumnTd = `<td class="leverage-column show">${advantageHTML}</td>`;
+            }
+        }
+        
+        resultHTML += `<tr>
+            <td>${period}</td>
+            <td>₹${mtfCharges.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+            <td>₹${gst.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+            <td>${period === 1 ? '₹' + otherCharges.toLocaleString('en-IN', {maximumFractionDigits: 2}) : '-'}</td>
+            ${leverageColumnTd}
+            <td>₹${grossProfit.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+            <td>₹${paperProfit.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+            <td class="${profitClass}">₹${netProfit.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+            <td class="${profitClass}">${returnPercent.toLocaleString('en-IN', {maximumFractionDigits: 2})}%</td>
+        </tr>`;
+    }
+    
+    document.getElementById('result').innerHTML = resultHTML;
+    
+    // Select the default period
+    selectMonth(defaultPeriod);
+    
+    // Update the current rate display to match the calculated interest rate
+    if (!customRateToggle.checked) {
+        currentRateDisplay.textContent = `Current Rate: ${interestRate}%`;
+    }
+}
+
+function resetForm() {
+    document.getElementById('ownAmount').value = 100000;
+    document.getElementById('buyPrice').value = 100;
+    document.getElementById('sellPrice').value = 105;
+    document.getElementById('leverage').value = 5;
+    document.getElementById('totalBalance').value = 500000;
+    document.getElementById('maxPeriod').value = 12;
+    document.getElementById('customRateToggle').checked = false;
+    document.getElementById('customRate').value = 12.49;
+    document.getElementById('dayModeToggle').checked = false;
+    document.getElementById('maxPeriodLabel').textContent = 'Max Months:';
+    document.querySelector('#tableHeader th:first-child').textContent = 'Month';
+    document.querySelector('.table-container').style.maxHeight = '400px'; // Reset to original height
+    customRateContainer.style.display = 'none';
+    document.getElementById('resultSummary').style.display = 'none';
+    document.getElementById('result').innerHTML = '';
+    document.getElementById('monthSelector').innerHTML = '';
+    leverageColumnHeader.classList.remove('show');
+    document.getElementById('noLeverageRow').style.display = 'none';
+    document.getElementById('diffRow').style.display = 'none';
+    
+    // Reset global variables
+    noLeverageReturnPercent = 0;
+    noLeverageNetProfit = 0;
+    
+    // Reset amount display
+    const amountDisplay = document.getElementById('amountDisplay');
+    if (amountDisplay) {
+        amountDisplay.textContent = '';
+        // Trigger update to show default amount
+        updateAmountDisplay();
+    }
+    
+    // Reset total balance display
+    const totalBalanceDisplay = document.getElementById('totalBalanceDisplay');
+    if (totalBalanceDisplay) {
+        totalBalanceDisplay.textContent = '';
+        // Trigger update to show default total balance
+        updateTotalBalanceDisplay();
+    }
+    
+    // Reset interest rate display to 0% (for 1x leverage)
+    updateInterestRateDisplay();
+    
+    calculationResults = [];
+}
+
+	</script>
+</body>
+</html>
